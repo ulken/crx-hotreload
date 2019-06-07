@@ -50,7 +50,7 @@ const watchForChanges = async (dir, lastModifiedTime) => {
   }
 };
 
-chrome.management.getSelf(self => {
+export default chrome.management.getSelf(self => {
   if (self.installType === "development") {
     chrome.runtime.getPackageDirectoryEntry(watchForChanges);
   }

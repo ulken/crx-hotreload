@@ -1,14 +1,14 @@
 {
-  "name": "crx-hotreload",
-  "version": "1.0.3",
+  "name": "crx-livereload",
+  "version": "1.0.4",
   "description": "Watches for file changes in your Chrome extension's directory. When a change is detected, it reloads the extension and refreshes the active tab (to re-trigger the updated scripts).",
-  "main": "hot-reload.js",
+  "main": "live-reload.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/xpl/crx-hotreload.git"
+    "url": "git+https://github.com/ulken/crx-livereload.git"
   },
   "keywords": [
     "chrome",
@@ -16,21 +16,21 @@
     "plugin",
     "chrome extension",
     "chrome plugin",
-    "hot reload",
+    "live reload",
     "automatic reload",
     "restart on code change",
     "file monitor",
     "watchdog",
     "watch",
     "reload",
-    "hot",
+    "live",
     "crx",
-    "crx-hotreload"
+    "crx-livereload"
   ],
-  "author": "Vitaly Gordon <rocket.mind@gmail.com> (http://github.com/xpl)",
+  "author": "Oskar Löfgren <islander.abroad@gmail.com> (http://github.com/ulken)",
   "license": "Unlicense",
   "bugs": {
-    "url": "https://github.com/xpl/crx-hotreload/issues"
+    "url": "https://github.com/ulken/crx-livereload/issues"
   },
-  "homepage": "https://github.com/xpl/crx-hotreload#readme"
+  "homepage": "https://github.com/ulken/crx-livereload#readme"
 }
