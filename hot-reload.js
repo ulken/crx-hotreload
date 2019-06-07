@@ -1,52 +1,57 @@
-const filesInDirectory = dir => new Promise (resolve =>
+const flatten = arr =>
+  arr.reduce((acc, e) => acc.concat(Array.isArray(e) ? flatten(e) : e), []);
 
-    dir.createReader ().readEntries (entries =>
+const sum = xs => xs.reduce((acc, x) => acc + x, 0);
 
-        Promise.all (entries.filter (e => e.name[0] !== '.').map (e =>
-
+const filesInDirectory = dir =>
+  new Promise(resolve =>
+    dir.createReader().readEntries(async entries => {
+      const files = await Promise.all(
+        entries
+          .filter(e => !e.name.startsWith("."))
+          .map(e =>
             e.isDirectory
-                ? filesInDirectory (e)
-                : new Promise (resolve => e.file (resolve))
-        ))
-        .then (files => [].concat (...files))
-        .then (resolve)
-    )
-)
+              ? filesInDirectory(e)
+              : new Promise(resolve => e.file(resolve))
+          )
+      );
+      return resolve(flatten(files));
+    })
+  );
 
-const timestampForFilesInDirectory = dir =>
-        filesInDirectory (dir).then (files =>
-            files.map (f => f.name + f.lastModifiedDate).join ())
+const modifiedTimeForFilesInDirectory = async dir => {
+  const files = await filesInDirectory(dir);
+  return sum(files.map(f => f.lastModified));
+};
 
 const reload = () => {
-
-    chrome.tabs.query ({ active: true, currentWindow: true }, tabs => { // NB: see https://github.com/xpl/crx-hotreload/issues/5
-
-        if (tabs[0]) { chrome.tabs.reload (tabs[0].id) }
-
-        chrome.runtime.reload ()
-    })
-}
-
-const watchChanges = (dir, lastTimestamp) => {
-
-    timestampForFilesInDirectory (dir).then (timestamp => {
-
-        if (!lastTimestamp || (lastTimestamp === timestamp)) {
-
-            setTimeout (() => watchChanges (dir, timestamp), 1000) // retry after 1s
-
-        } else {
-
-            reload ()
-        }
-    })
-
-}
-
-chrome.management.getSelf (self => {
-
-    if (self.installType === 'development') {
-
-        chrome.runtime.getPackageDirectoryEntry (dir => watchChanges (dir))
+  chrome.tabs.query({ active: true, currentWindow: true }, ([activeTab]) => {
+    if (activeTab) {
+      chrome.tabs.reload(activeTab.id);
     }
-})
+
+    chrome.runtime.reload();
+  });
+};
+
+const hasDirectoryChanged = async (dir, lastModifiedTime) => {
+  if (!lastModifiedTime) return true;
+
+  const modifiedTime = await modifiedTimeForFilesInDirectory(dir);
+  return modifiedTime !== lastModifiedTIme;
+};
+
+const watchForChanges = async (dir, lastModifiedTime) => {
+  const hasChanged = await hasDirectoryChanged(dir, lastModifiedTime);
+  if (hasChanged) {
+    reload();
+  } else {
+    setTimeout(() => watchForChanges(dir, lastModifiedTime), 100);
+  }
+};
+
+chrome.management.getSelf(self => {
+  if (self.installType === "development") {
+    chrome.runtime.getPackageDirectoryEntry(watchForChanges);
+  }
+});
