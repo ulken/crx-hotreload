@@ -24,6 +24,13 @@ const modifiedTimeForFilesInDirectory = async dir => {
   return sum(files.map(f => f.lastModified));
 };
 
+const hasDirectoryChanged = async (dir, lastModifiedTime) => {
+  if (!lastModifiedTime) return true;
+
+  const modifiedTime = await modifiedTimeForFilesInDirectory(dir);
+  return modifiedTime !== lastModifiedTIme;
+};
+
 const reload = () => {
   chrome.tabs.query({ active: true, currentWindow: true }, ([activeTab]) => {
     if (activeTab) {
@@ -34,24 +41,23 @@ const reload = () => {
   });
 };
 
-const hasDirectoryChanged = async (dir, lastModifiedTime) => {
-  if (!lastModifiedTime) return true;
-
-  const modifiedTime = await modifiedTimeForFilesInDirectory(dir);
-  return modifiedTime !== lastModifiedTIme;
-};
-
 const watchForChanges = async (dir, lastModifiedTime) => {
-  const hasChanged = await hasDirectoryChanged(dir, lastModifiedTime);
+  const modifiedTime = await modifiedTimeForFilesInDirectory(dir);
+  const hasChanged = !lastModifiedTime || modifiedTime !== lastModifiedTime;
   if (hasChanged) {
     reload();
   } else {
-    setTimeout(() => watchForChanges(dir, lastModifiedTime), 100);
+    setTimeout(() => watchForChanges(dir, modifiedTime), 100);
   }
 };
 
-export default chrome.management.getSelf(self => {
-  if (self.installType === "development") {
-    chrome.runtime.getPackageDirectoryEntry(watchForChanges);
-  }
-});
+const watch = () =>
+  chrome.management.getSelf(self => {
+    if (self.installType === "development") {
+      chrome.runtime.getPackageDirectoryEntry(watchForChanges);
+    }
+  });
+
+const LiveReload = { watch };
+
+export default LiveReload;
